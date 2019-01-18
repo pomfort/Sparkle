@@ -126,6 +126,19 @@ SU_EXPORT extern NSString *const SUUpdaterAppcastNotificationKey;
 - (BOOL)itemContainsValidUpdate:(SUAppcastItem *)item forUpdater:(SUUpdater *)updater validationError:(NSError* __autoreleasing* )validationError;
 
 /*!
+ Shows an update validation error to the user.
+
+ If you do not know how to handle the error, you can
+ return no and let Sparkle fallback to its default
+ behavior.
+
+ \param validationError validationError to show to the user
+ \param updater The SUUpdater instance.
+ \return \c YES if error has been handled by the delegate, \c NO if Sparkle should handle the error
+ */
+- (BOOL)showUpdateValidationError:(NSError*)validationError forUpdater:(SUUpdater *)updater;
+
+/*!
  Called when a valid update is found by the update driver.
  
  \param updater The SUUpdater instance.

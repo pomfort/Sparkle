@@ -110,8 +110,16 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:SUUpdaterDidNotFindUpdateNotification object:self.updater];
 
     if (!self.automaticallyInstallUpdates) {
-        NSAlert *alert = [self alertForValidationError:validationError];
-        [self showAlert:alert];
+        BOOL shouldShowAlert = YES;
+
+        if([[updater delegate] respondsToSelector:@selector(showUpdateValidationError:forUpdater:)]) {
+            shouldShowAlert = ![[updater delegate] showUpdateValidationError:validationError forUpdater:self.updater];
+        }
+
+        if(shouldShowAlert) {
+            NSAlert *alert = [self alertForValidationError:validationError];
+            [self showAlert:alert];
+        }
     }
     
     [self abortUpdate];
