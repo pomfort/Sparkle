@@ -205,7 +205,16 @@
 
 - (BOOL)itemContainsValidUpdate:(SUAppcastItem *)ui validationError:(__autoreleasing NSError**)validationError
 {
-    return ui && [[self class] hostSupportsItem:ui validationError:validationError] && [self isItemNewer:ui] && ![self itemContainsSkippedVersion:ui];
+    id<SUUpdaterPrivate> updater = self.updater;
+    id<SUUpdaterDelegate> delegate = updater.delegate;
+    
+    BOOL isValid =  ui && [[self class] hostSupportsItem:ui validationError:validationError] && [self isItemNewer:ui] && ![self itemContainsSkippedVersion:ui];
+
+    if([delegate respondsToSelector:@selector(itemContainsValidUpdate:forUpdater:validationError:)]) {
+        isValid = isValid && [delegate itemContainsValidUpdate:ui forUpdater:self.updater validationError:validationError];
+    }
+
+    return isValid;
 }
 
 - (void)appcastDidFinishLoading:(SUAppcast *)ac

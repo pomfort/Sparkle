@@ -119,16 +119,31 @@
 
 - (NSAlert*) alertForValidationError:(NSError*)validationError
 {
-    NSAssert([validationError.domain isEqualToString:SUSparkleUpdateValidationErrorDomain],
-             @"only sparkle update validation errors can be handled, received error with domain %@", validationError.domain);
-
     NSAlert *alert = [[NSAlert alloc] init];
     if(validationError == nil) {
         alert.messageText = SULocalizedString(@"You're up-to-date!", "Status message shown when the user checks for updates but is already current or the feed doesn't contain any updates.");
         alert.informativeText = [NSString stringWithFormat:SULocalizedString(@"%@ %@ is currently the newest version available.", nil), [self.host name], [self.host displayVersion]];
     }
+    else if([validationError.domain isEqualToString:SUSparkleUpdateValidationErrorDomain]){
+        if(validationError.code == SUUpdateValidationErrorIncompatibleHostOSType ||
+           validationError.code == SUUpdateValidationErrorIncompatibleHostOSTooOld ||
+           validationError.code == SUUpdateValidationErrorIncompatibleHostOSTooNew) {
+            alert.messageText = SULocalizedString(@"Update is not available for your OS!", nil);
+            alert.informativeText = validationError.localizedDescription;
+        }
+        else {
+            alert.messageText = SULocalizedString(@"Update is not available!", nil);
+            if(validationError != nil) {
+                alert.informativeText = validationError.localizedDescription;
+            }
+            else {
+                alert.informativeText = SULocalizedString(@"An update is available, but can't be installed.", nil);
+            }
+        }
+    }
     else {
-        alert.messageText = SULocalizedString(@"Update is not available for your OS!", nil);
+        //custom errors, produced by the updater delegate
+        alert.messageText = SULocalizedString(@"Update is not available!", nil);
         alert.informativeText = validationError.localizedDescription;
     }
 

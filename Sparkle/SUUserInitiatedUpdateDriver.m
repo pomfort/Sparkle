@@ -12,6 +12,8 @@
 #import "SUHost.h"
 #import "SULocalizations.h"
 #import "SUApplicationInfo.h"
+#import "SUUpdaterPrivate.h"
+#import "SUUpdaterDelegate.h"
 
 @interface SUUserInitiatedUpdateDriver ()
 
@@ -92,8 +94,17 @@
 
 - (BOOL)itemContainsValidUpdate:(SUAppcastItem *)ui validationError:(__autoreleasing NSError**)outValidationError
 {
+    id<SUUpdaterPrivate> updater = self.updater;
+    id<SUUpdaterDelegate> delegate = updater.delegate;
+
     // We don't check to see if this update's been skipped, because the user explicitly *asked* if he had the latest version.
-    return [[self class] hostSupportsItem:ui validationError:outValidationError] && [self isItemNewer:ui];
+    BOOL isValid = ui && [[self class] hostSupportsItem:ui validationError:outValidationError] && [self isItemNewer:ui];
+
+    if([delegate respondsToSelector:@selector(itemContainsValidUpdate:forUpdater:validationError:)]) {
+        isValid = isValid && [delegate itemContainsValidUpdate:ui forUpdater:self.updater validationError:outValidationError];
+    }
+
+    return isValid;
 }
 
 @end

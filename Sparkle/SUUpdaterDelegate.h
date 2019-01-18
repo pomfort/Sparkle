@@ -110,6 +110,22 @@ SU_EXPORT extern NSString *const SUUpdaterAppcastNotificationKey;
 - (nullable SUAppcastItem *)bestValidUpdateInAppcast:(SUAppcast *)appcast forUpdater:(SUUpdater *)updater;
 
 /*!
+ Validates the item that has been selected as best available update.
+
+ You can implement custom validation logic to reject an update that would,
+ e.g. update to a higher major version.
+
+ The validation error can be returned via the validationError out pointer.
+
+ Sparkle will show the localizedDescription of the validationError to the user.
+
+ \param item The appcast item that should be validated.
+ \param updater The SUUpdater instance.
+ \param validationError validationError that can be returned
+ */
+- (BOOL)itemContainsValidUpdate:(SUAppcastItem *)item forUpdater:(SUUpdater *)updater validationError:(NSError* __autoreleasing* )validationError;
+
+/*!
  Called when a valid update is found by the update driver.
  
  \param updater The SUUpdater instance.
