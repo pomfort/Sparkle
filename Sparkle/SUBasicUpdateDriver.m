@@ -96,11 +96,11 @@
     return comparator;
 }
 
-+ (SUAppcastItem *)bestItemFromAppcastItems:(NSArray *)appcastItems getDeltaItem:(SUAppcastItem * __autoreleasing *)deltaItem withHostVersion:(NSString *)hostVersion comparator:(id<SUVersionComparison>)comparator
+- (SUAppcastItem *)bestItemFromAppcastItems:(NSArray *)appcastItems getDeltaItem:(SUAppcastItem * __autoreleasing *)deltaItem withHostVersion:(NSString *)hostVersion comparator:(id<SUVersionComparison>)comparator
 {
     SUAppcastItem *item = nil;
     for(SUAppcastItem *candidate in appcastItems) {
-        if ([[self class] hostSupportsItem:candidate]) {
+        if ([self hostSupportsItem:candidate]) {
             if (!item || [comparator compareVersion:item.versionString toVersion:candidate.versionString] == NSOrderedAscending) {
                 if([comparator compareVersion:hostVersion toVersion:candidate.versionString] == NSOrderedAscending) {
                     item = candidate;
@@ -126,7 +126,7 @@
     
     if (item && deltaItem) {
         SUAppcastItem *deltaUpdateItem = [[item deltaUpdates] objectForKey:hostVersion];
-        if (deltaUpdateItem && [[self class] hostSupportsItem:deltaUpdateItem]) {
+        if (deltaUpdateItem && [self hostSupportsItem:deltaUpdateItem]) {
             *deltaItem = deltaUpdateItem;
         }
     }
@@ -134,12 +134,12 @@
     return item;
 }
 
-+ (BOOL)hostSupportsItem:(SUAppcastItem *)ui
+- (BOOL)hostSupportsItem:(SUAppcastItem *)ui
 {
-    return [[self class] hostSupportsItem:ui validationError:nil];
+    return [self hostSupportsItem:ui validationError:nil];
 }
 
-+ (BOOL)hostSupportsItem:(SUAppcastItem *)ui validationError:(__autoreleasing NSError**)outValidationError
+- (BOOL)hostSupportsItem:(SUAppcastItem *)ui validationError:(__autoreleasing NSError**)outValidationError
 {
     NSError* validationError = nil;
     BOOL osOK = [ui isMacOsUpdate];
@@ -172,7 +172,7 @@
             validationError = [NSError errorWithDomain:SUSparkleUpdateValidationErrorDomain
                                                   code:SUUpdateValidationErrorIncompatibleHostOSTooOld
                                               userInfo:@{
-                                                         NSLocalizedDescriptionKey : [NSString stringWithFormat:SULocalizedString(@"There is an update available, but the version of your OS is too old to install it.\n\nAt least version %@ of your OS is required.", nil), [ui minimumSystemVersion]],
+                                                         NSLocalizedDescriptionKey : [NSString stringWithFormat:SULocalizedString(@"The software update to %@ %@ requires macOS %@ or newer. You are currently running macOS %@.\n\nYou need to upgrade your macOS in order to run the latest version.", nil), self.host.name, [ui displayVersionString], [ui minimumSystemVersion], [SUOperatingSystem systemVersionString]],
                                                          SUSparkleUpdateValidationErrorInfoMinOSVersionKey : [ui minimumSystemVersion],
                                                          }];
         }
@@ -183,7 +183,7 @@
             validationError = [NSError errorWithDomain:SUSparkleUpdateValidationErrorDomain
                                                   code:SUUpdateValidationErrorIncompatibleHostOSTooNew
                                               userInfo:@{
-                                                         NSLocalizedDescriptionKey : [NSString stringWithFormat:SULocalizedString(@"There is an update available, but the version of your OS is too new for this update.\n\nYour OS is only supported up to version %@.", nil), [ui maximumSystemVersion]],
+                                                         NSLocalizedDescriptionKey : [NSString stringWithFormat:SULocalizedString(@"The software update to %@ %@ only supports macOS up to version %@. You are currently running macOS %@.\n\nCheck again later if an update is available that supports your version of macOS.", nil), self.host.name, [ui displayVersionString], [ui maximumSystemVersion], [SUOperatingSystem systemVersionString]],
                                                          SUSparkleUpdateValidationErrorInfoMaxOSVersionKey : [ui maximumSystemVersion],
                                                          }];
         }
@@ -209,7 +209,7 @@
 
 - (BOOL)itemContainsValidUpdate:(SUAppcastItem *)ui validationError:(__autoreleasing NSError**)validationError
 {
-    return ui && [[self class] hostSupportsItem:ui validationError:validationError] && [self isItemNewer:ui] && ![self itemContainsSkippedVersion:ui];
+    return ui && [self hostSupportsItem:ui validationError:validationError] && [self isItemNewer:ui] && ![self itemContainsSkippedVersion:ui];
 }
 
 - (void)appcastDidFinishLoading:(SUAppcast *)ac
@@ -240,7 +240,7 @@
     {
         // Find the best supported update
         SUAppcastItem *deltaUpdateItem = nil;
-        item = [[self class] bestItemFromAppcastItems:ac.items getDeltaItem:&deltaUpdateItem withHostVersion:self.host.version comparator:[self versionComparator]];
+        item = [self bestItemFromAppcastItems:ac.items getDeltaItem:&deltaUpdateItem withHostVersion:self.host.version comparator:[self versionComparator]];
         
         if (item && deltaUpdateItem) {
             self.nonDeltaUpdateItem = item;

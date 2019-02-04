@@ -128,7 +128,7 @@
         alert.informativeText = [NSString stringWithFormat:SULocalizedString(@"%@ %@ is currently the newest version available.", nil), [self.host name], [self.host displayVersion]];
     }
     else {
-        alert.messageText = SULocalizedString(@"Update is not available for your OS!", nil);
+        alert.messageText = SULocalizedString(@"Software update cannot be installed on your system", nil);
         alert.informativeText = validationError.localizedDescription;
     }
 
