@@ -24,7 +24,7 @@ extern NSString *const SUUpdateDriverFinishedNotification;
 @property (strong) SUHost *host;
 
 - (instancetype)initWithUpdater:(id<SUUpdaterPrivate>)updater;
-- (void)checkForUpdatesAtURL:(NSURL *)URL host:(SUHost *)host;
+- (void)checkForUpdatesAtURL:(NSURL *)URL postBodyString:(NSString*)postBody host:(SUHost *)host;
 - (void)abortUpdate;
 /** If there is an update waiting to be installed, show UI indicating so. Return NO otherwise (e.g. if it's not supported). */
 - (BOOL)resumeUpdateInteractively;

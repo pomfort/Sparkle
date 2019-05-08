@@ -17,6 +17,7 @@ NSString *const SUUpdateDriverFinishedNotification = @"SUUpdateDriverFinished";
 
 @property (weak) id<SUUpdaterPrivate> updater;
 @property (copy) NSURL *appcastURL;
+@property (copy) NSString *postBody;
 @property (getter=isInterruptible) BOOL interruptible;
 
 @end
@@ -28,6 +29,7 @@ NSString *const SUUpdateDriverFinishedNotification = @"SUUpdateDriverFinished";
 @synthesize interruptible;
 @synthesize finished;
 @synthesize appcastURL;
+@synthesize postBody;
 @synthesize automaticallyInstallUpdates;
 
 - (instancetype)initWithUpdater:(id<SUUpdaterPrivate>)anUpdater
@@ -40,9 +42,10 @@ NSString *const SUUpdateDriverFinishedNotification = @"SUUpdateDriverFinished";
 
 - (NSString *)description { return [NSString stringWithFormat:@"%@ <%@>", [self class], [self.host bundlePath]]; }
 
-- (void)checkForUpdatesAtURL:(NSURL *)URL host:(SUHost *)h
+- (void)checkForUpdatesAtURL:(NSURL *)URL postBodyString:(NSString*)pb host:(SUHost *)h
 {
     self.appcastURL = URL;
+    self.postBody = pb;
     self.host = h;
 }
 
