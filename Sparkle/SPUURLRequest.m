@@ -16,10 +16,14 @@ static NSString *SPUURLRequestCachePolicyKey = @"SPUURLRequestCachePolicy";
 static NSString *SPUURLRequestTimeoutIntervalKey = @"SPUURLRequestTimeoutInterval";
 static NSString *SPUURLRequestHttpHeaderFieldsKey = @"SPUURLRequestHttpHeaderFields";
 static NSString *SPUURLRequestNetworkServiceTypeKey = @"SPUURLRequestNetworkServiceType";
+static NSString *SPUURLRequestMethodKey = @"SPUURLRequestMethodKey";
+static NSString *SPUURLRequestHTTPBodyKey = @"SPUURLRequestHTTPBodyKey";
 
 @interface SPUURLRequest ()
 
 @property (nonatomic, readonly) NSURL *url;
+@property (nonatomic, readonly) NSString *method;
+@property (nonatomic, readonly) NSData *httpBody;
 @property (nonatomic, readonly) NSURLRequestCachePolicy cachePolicy;
 @property (nonatomic, readonly) NSTimeInterval timeoutInterval;
 @property (nonatomic, readonly, nullable) NSDictionary<NSString *, NSString *> *httpHeaderFields;
@@ -30,16 +34,20 @@ static NSString *SPUURLRequestNetworkServiceTypeKey = @"SPUURLRequestNetworkServ
 @implementation SPUURLRequest
 
 @synthesize url = _url;
+@synthesize method = _method;
+@synthesize httpBody = _httpBody;
 @synthesize cachePolicy = _cachePolicy;
 @synthesize timeoutInterval = _timeoutInterval;
 @synthesize httpHeaderFields = _httpHeaderFields;
 @synthesize networkServiceType = _networkServiceType;
 
-- (instancetype)initWithURL:(NSURL *)url cachePolicy:(NSURLRequestCachePolicy)cachePolicy timeoutInterval:(NSTimeInterval)timeoutInterval httpHeaderFields:(NSDictionary<NSString *, NSString *> *)httpHeaderFields networkServiceType:(NSURLRequestNetworkServiceType)networkServiceType
+- (instancetype)initWithURL:(NSURL *)url method:(NSString *)method httpBody:(NSData*)httpBody cachePolicy:(NSURLRequestCachePolicy)cachePolicy timeoutInterval:(NSTimeInterval)timeoutInterval httpHeaderFields:(NSDictionary<NSString *, NSString *> *)httpHeaderFields networkServiceType:(NSURLRequestNetworkServiceType)networkServiceType
 {
     self = [super init];
     if (self != nil) {
         _url = url;
+        _method = method;
+        _httpBody = httpBody;
         _cachePolicy = cachePolicy;
         _timeoutInterval = timeoutInterval;
         _httpHeaderFields = httpHeaderFields;
@@ -50,7 +58,7 @@ static NSString *SPUURLRequestNetworkServiceTypeKey = @"SPUURLRequestNetworkServ
 
 + (instancetype)URLRequestWithRequest:(NSURLRequest *)request
 {
-    return [(SPUURLRequest *)[[self class] alloc] initWithURL:request.URL cachePolicy:request.cachePolicy timeoutInterval:request.timeoutInterval httpHeaderFields:request.allHTTPHeaderFields networkServiceType:request.networkServiceType];
+    return [(SPUURLRequest *)[[self class] alloc] initWithURL:request.URL method:request.HTTPMethod httpBody:request.HTTPBody cachePolicy:request.cachePolicy timeoutInterval:request.timeoutInterval httpHeaderFields:request.allHTTPHeaderFields networkServiceType:request.networkServiceType];
 }
 
 + (BOOL)supportsSecureCoding
@@ -68,6 +76,11 @@ static NSString *SPUURLRequestNetworkServiceTypeKey = @"SPUURLRequestNetworkServ
     if (self.httpHeaderFields != nil) {
         [coder encodeObject:self.httpHeaderFields forKey:SPUURLRequestHttpHeaderFieldsKey];
     }
+
+    [coder encodeObject:self.method forKey:SPUURLRequestMethodKey];
+    if(self.httpBody != nil) {
+        [coder encodeObject:self.httpBody forKey:SPUURLRequestHTTPBodyKey];
+    }
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder
@@ -78,8 +91,13 @@ static NSString *SPUURLRequestNetworkServiceTypeKey = @"SPUURLRequestNetworkServ
         NSTimeInterval timeoutInterval = [decoder decodeDoubleForKey:SPUURLRequestTimeoutIntervalKey];
         NSDictionary<NSString *, NSString *> *httpHeaderFields = [decoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSDictionary class], [NSString class]]] forKey:SPUURLRequestHttpHeaderFieldsKey];
         NSURLRequestNetworkServiceType networkServiceType = (NSURLRequestNetworkServiceType)[decoder decodeIntegerForKey:SPUURLRequestNetworkServiceTypeKey];
+        NSString *method = [decoder decodeObjectOfClass:[NSString class] forKey:SPUURLRequestMethodKey];
+        if(method == nil) {
+            method = @"GET";
+        }
+        NSData* httpBody = [decoder decodeObjectOfClass:[NSData class] forKey:SPUURLRequestHTTPBodyKey];
 
-        return [self initWithURL:url cachePolicy:cachePolicy timeoutInterval:timeoutInterval httpHeaderFields:httpHeaderFields networkServiceType:networkServiceType];
+        return [self initWithURL:url method:method httpBody:httpBody cachePolicy:cachePolicy timeoutInterval:timeoutInterval httpHeaderFields:httpHeaderFields networkServiceType:networkServiceType];
     } else {
         abort(); // Not used on 10.7
     }
@@ -92,6 +110,15 @@ static NSString *SPUURLRequestNetworkServiceTypeKey = @"SPUURLRequestNetworkServ
         request.allHTTPHeaderFields = self.httpHeaderFields;
     }
     request.networkServiceType = self.networkServiceType;
+
+    if(self.method != nil) {
+        request.HTTPMethod = self.method;
+    }
+
+    if(self.httpBody != nil) {
+        request.HTTPBody = self.httpBody;
+    }
+
     return [request copy];
 }
 

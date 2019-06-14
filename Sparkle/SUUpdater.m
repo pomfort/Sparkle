@@ -45,7 +45,7 @@ NSString *const SUUpdaterAppcastNotificationKey = @"SUUpdaterAppCastNotification
 - (void)registerAsObserver;
 - (void)unregisterAsObserver;
 - (void)updateDriverDidFinish:(NSNotification *)note;
-@property (readonly, copy) NSURL *parameterizedFeedURL;
+@property (readonly, copy) NSString *feedURLPostBody;
 
 @property (strong) SUUpdateDriver *driver;
 @property (strong) SUHost *host;
@@ -370,9 +370,10 @@ static NSString *const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefaults
 
     [self checkIfConfiguredProperly];
 
-    NSURL *theFeedURL = [self parameterizedFeedURL];
+    NSURL *theFeedURL = [self feedURL];
+    NSString *thePostBody = [self feedURLPostBody];
     if (theFeedURL) // Use a NIL URL to cancel quietly.
-        [self.driver checkForUpdatesAtURL:theFeedURL host:self.host];
+        [self.driver checkForUpdatesAtURL:theFeedURL postBodyString:thePostBody host:self.host];
     else
         [self.driver abortUpdate];
 }
@@ -517,10 +518,8 @@ static NSString *escapeURLComponent(NSString *str) {
              stringByReplacingOccurrencesOfString:@"+" withString:@"%2b"];
 }
 
-- (NSURL *)parameterizedFeedURL
+- (NSString *)feedURLPostBody
 {
-    NSURL *baseFeedURL = [self feedURL];
-
     // Determine all the parameters we're attaching to the base feed URL.
     BOOL sendingSystemProfile = [self sendsSystemProfile];
 
@@ -541,7 +540,7 @@ static NSString *escapeURLComponent(NSString *str) {
         parameters = [parameters arrayByAddingObjectsFromArray:[SUSystemProfiler systemProfileArrayForHost:self.host]];
         [self.host setObject:[NSDate date] forUserDefaultsKey:SULastProfileSubmitDateKey];
     }
-	if ([parameters count] == 0) { return baseFeedURL; }
+	if ([parameters count] == 0) { return nil; }
 
     // Build up the parameterized URL.
     NSMutableArray *parameterStrings = [NSMutableArray array];
@@ -549,14 +548,10 @@ static NSString *escapeURLComponent(NSString *str) {
         [parameterStrings addObject:[NSString stringWithFormat:@"%@=%@", escapeURLComponent([[currentProfileInfo objectForKey:@"key"] description]), escapeURLComponent([[currentProfileInfo objectForKey:@"value"] description])]];
     }
 
-    NSString *separatorCharacter = @"?";
-    if ([baseFeedURL query]) {
-        separatorCharacter = @"&"; // In case the URL is already http://foo.org/baz.xml?bat=4
-    }
-    NSString *appcastStringWithProfile = [NSString stringWithFormat:@"%@%@%@", [baseFeedURL absoluteString], separatorCharacter, [parameterStrings componentsJoinedByString:@"&"]];
+    NSString* postBodyString = [parameterStrings componentsJoinedByString:@"&"];
 
     // Clean it up so it's a valid URL
-    return [NSURL URLWithString:appcastStringWithProfile];
+    return postBodyString;
 }
 
 - (void)setUpdateCheckInterval:(NSTimeInterval)updateCheckInterval

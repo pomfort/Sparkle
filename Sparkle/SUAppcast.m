@@ -63,7 +63,7 @@
 @synthesize download;
 @synthesize items;
 
-- (void)fetchAppcastFromURL:(NSURL *)url inBackground:(BOOL)background completionBlock:(void (^)(NSError *))block
+- (void)fetchAppcastFromURL:(NSURL *)url postBody:(NSString*)postBody inBackground:(BOOL)background completionBlock:(void (^)(NSError *))block
 {
     self.completionBlock = block;
 
@@ -81,6 +81,17 @@
             NSString *value = [self.httpHeaders objectForKey:key];
             [request setValue:value forHTTPHeaderField:key];
         }
+    }
+
+    if(postBody != nil) {
+        NSData* data = [postBody dataUsingEncoding:NSUTF8StringEncoding];
+
+        [request setHTTPMethod:@"POST"];
+        [request setValue:[NSString stringWithFormat:@"%llu", (unsigned long long)data.length]
+       forHTTPHeaderField:@"Content-Length"];
+        [request setValue:@"application/x-www-form-urlencoded"
+       forHTTPHeaderField:@"Current-Type"];
+        [request setHTTPBody:data];
     }
 
     [request setValue:@"application/rss+xml,*/*;q=0.1" forHTTPHeaderField:@"Accept"];
